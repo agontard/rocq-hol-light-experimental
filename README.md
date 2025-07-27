@@ -5,7 +5,7 @@ The benefits are that mappings can easily be changed without having to retransla
 
 Because of the size of the proofs of the multivariate library, this repository only currently contains the contents of the [coq-hol-light-real-with-N](https://github.com/Deducteam/coq-hol-light-real-with-N) library. Mappings are currently being changed to typeclass instances.
 
-Check TODO for plans and ideas of features for this translation.
+Check [TODO](https://github.com/agontard/rocq-hol-light-experimental/blob/main/TODO.md) for plans and ideas of features for this translation.
 
 ## Tools for classical logic
 To fit HOL Light's logic, we require the following usual axioms of classical logic, from mathcomp-classical/boolp.
