@@ -1,14 +1,14 @@
 Goals and ideas in no particular order.
-##### Translate the proof checks :  
+##### Translate the proof checks:  
 Currently I only wrote an ocaml code to translate the terms and theorems files obtained with hol2dk.  
 One could already be satisfied with the checking of the original proofs and assume that it is assurance of the correctness of the theorems on typeclasses.  
 But it is also possible to simply add in the dependencies of all proof file a file containing one axiom per class.  
 I would personally be fully satisfied with that, as universal quantifying and axiom assumption are logically the same.
-##### Implicit arguments :
+##### Implicit arguments:
 Since the objects are now implicitly depending on each other, explicit arguments with @ are no longer usable.  
 To deal with that, I removed them as well as all implicit arguments of all objects.  
 But it's a bit annoying to work with so I will probably have the assertion of implicit arguments appear at the end of the file.
-##### Alignment commands :
+##### Alignment commands:
 Currently, to align HOL object x with Rocq object y, one needs for example to write  
 ``Lemma x_def_i : y=[...]``  
 ``Proof.``  
@@ -16,9 +16,15 @@ Currently, to align HOL object x with Rocq object y, one needs for example to wr
 ``Qed.``  
 ``Instance x_i : x_Class := {| x_def := x_def_i |}.``  
 ``Canonical x_i.``  
-I want to experiment with writing a Rocq plugin to simplify this in one command and for variants as well.  
-This would also be a good place to include fully automatic alignments for inductive types and recursive functions.
-##### Custom Search command :
-No idea about feasibility and complexity. Have a possibility for a user to have a Search (and maybe also Check) command that would also fetch lemmas about the HOL Light object (so the field of the Class).  
-For example, having Search N.succ also include results for SUC.
-Another possibility would be having commands to derive theorems. Even though theorems are readily usable once mappings are correct (all transparent and canonical), maybe it would be better to derive theorems on the actual objects, so that they would directly appear in regular Search and Check command.
+I started experimenting with writing a Rocq plugin using rocq-elpi to simplify this in one command and for variants as well.  
+This is also a good place to include fully automatic alignments for inductive types and recursive functions.
+I am at the very beginning currently.
+##### Other options:
+Here are my detailed thoughts about all options I thought of, pros and cons (though my knowledge is limited). I should also talk about required trust in meta-theoretic results and external programs. Indeed, even in the current version of coq-hol-light, since proofs are too big, theorems are given as axioms, so one has to trust in the fact that the theorems checked are the exact same as the axioms stated. one also has to check the proofs. Actual users would also probably trust that we checked them and not check for themselves so that is an additional layer of trust needed. coq-hol-light includes a reproduce script to check that the theorems provided are the same as those translated by hol2dk. Users who would use that script need to trust it (it is easy to check it by reading it, but that can at best be considered a meta result). Therefore, the current coq-hol-light already requires some trust. Some other project also actually just translated theorems and not proofs which is a fair idea as well, but requires trust in the actual translation program. So I should state that I am fine with needing additionnal trust but I still wish to explicit what one needs to trust. This is why I would personally be satisfied with having axioms for proof checking (see first point)
+
+- The current idea with the section mechanism is not sound. Indeed a theorem (axiom) only depends on the objects appearing explicitly in its type (and their own dependencies), meanwhile for rigour, it should be noted that maybe the proof of the theorem actually uses some other object, for exemple as witness for an existencial proof. A possibility that I do not wish to explore for now would be to either write a program to run through proofs and read all objects mentionned or use in some way rocq's ''print assumptions'' to find/check all actual dependencies.
+- It could still be fine though. Indeed, the actual content of these potentially missed arguments does not matter (if the proof worked when it was an axiom), so actually if one trusts that there is an instance for this object (not for types, because in general we aligne them anyway since they require proof of being pointed), and a trivial instance exists which is when the definitional lemma is eq_refl. one then has to trust that removing the argument is not a problem (and it clearly isn't).
+- Why should we use typeclasses actually? The idea is definitely to have one simple instance per class, so using typeclass search and implicit arguments everywhere is kind of useless. For a lot of reasons anyway, I want to have a way to derive the actual aligned theorems: better compatibility with rocq's ''Print'', ''Check'', ''About'' and ''Search'', performance, and in some of the solutions I propose having the possibility to apply beta reduction before deriving.
+- So an idea could be to use rocq functors (modules), I do not know much about them and have only heard once that they might not give the best performances, which could be a problem with the amount of arguments. Also, from what I've seen, despite providing alignments for all of the argument module type, they are considered as independant axioms and therefore the theorems would not talk about the correct rocq objects, which is the goal of coq-hol-light.
+- Another could be to simply to have the axioms all depend on every argument (explicitely if better for performances), and provide a command to obtain the correct theorems by automatically instanciating the arguments. This can work with having all objects as arguments like a module, or with the section mechanism if you agree with the second of these bullets. If we want to keep consistency, objects should still be represented by records so that an object must come with its definition. Otherwise, we need to trust the users not to use the axioms themselves with any object instead of using their instanciated form.  
+- Finally, one that could be done is encoding some sort of section mechanism within elpi, where we simply don't define the axioms (and thus avoid duplication, for example in ''Search''), and instead lock the axiom declaration behind providing all allignments within elpi (elpi can use rocq's typechecker to check the alignments). These two solutions allow applying beta-reduction in elpi before axiom/theorem declaration. This last solution would be the best in terms of what we provide to users, but then one layer of trust must be added: trust in the elpi code that locks the axiom declaration and how elpi calls to rocq's typechecking. 
