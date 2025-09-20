@@ -7,6 +7,8 @@ Because of the size of the proofs of the multivariate library, this repository o
 
 Check [TODO](https://github.com/agontard/rocq-hol-light-experimental/blob/main/TODO.md) for plans and ideas of features for this translation.
 
+Files do not necessarily work, these are just me storing my progress currently.
+
 ## Tools for classical logic
 To fit HOL Light's logic, we require the following usual axioms of classical logic, from mathcomp-classical/boolp.
 
