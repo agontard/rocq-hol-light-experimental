@@ -4,7 +4,7 @@ Currently I only wrote an ocaml code to translate the terms and theorems files o
 One could already be satisfied with the checking of the original proofs and assume that it is assurance of the correctness of the theorems on typeclasses.  
 But it is also possible to simply add in the dependencies of all proof file a file containing one axiom per class.  
 I would personally be fully satisfied with that, as universal quantifying and axiom assumption are logically the same.  
-Actually unless I am mistaken, this equivalence is the base of the section mechanism, so it works the same as if we had a section running across all our proof files.
+Actually unless I am mistaken, this equivalence is the base of the section mechanism, so it works as if we had a section running across all our proof files.
 ##### Implicit arguments:
 Since the objects are now implicitly depending on each other, explicit arguments with @ are no longer usable.  
 To deal with that, I removed them as well as all implicit arguments of all objects.  
