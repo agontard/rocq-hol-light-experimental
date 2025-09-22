@@ -28,7 +28,7 @@ Actual users would also probably trust that we checked them and not check for th
 coq-hol-light includes a reproduce script to check that the theorems provided are the same as those translated by hol2dk. Users who would use that script need to trust it (it is easy to check it by reading it, but that can at best be considered a meta result).  
 Therefore, the current coq-hol-light already requires some trust. Some other projects also actually just translated theorems and not proofs which is a fair idea as well, but requires trust in the actual translation program.  
   
-So I should state that I am fine with needing additionnal trust but I still wish to make explicit what one needs to trust. This is why I would personally be satisfied with having axioms for proof checking (see first point)
+So I should state that I am fine with needing additionnal trust but I still wish to make explicit what one needs to trust. This is why I would personally be satisfied with having axioms for proof checking (see "Translate the proof checks")
 
 - The current idea with the section mechanism is not sound.  
   Indeed a theorem (axiom) only depends on the objects appearing explicitly in its type (and their own dependencies), meanwhile for rigour, it should be noted that maybe the proof of the theorem actually uses some other object, for exemple as witness for an existencial proof.  
