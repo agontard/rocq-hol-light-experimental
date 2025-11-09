@@ -67,6 +67,15 @@ builtin "prop_ext" ≔ prop_ext;
 builtin "COND" ≔ COND;
 builtin "COND_def" ≔ COND_def;
 
+// unit type
+builtin "unit" ≔ unit;
+builtin "one_ABS" ≔ one_ABS;
+builtin "one_REP" ≔ one_REP;
+builtin "axiom_2" ≔ axiom_2;
+builtin "axiom_3" ≔ axiom_3;
+builtin "tt" ≔ one;
+builtin "one_def" ≔ one_def;
+
 // product type
 builtin "mk_pair" ≔ mk_pair;
 builtin "mk_pair_def" ≔ mk_pair_def;
