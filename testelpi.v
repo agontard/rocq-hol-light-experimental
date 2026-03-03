@@ -1,5 +1,93 @@
 From elpi Require Import elpi.
 Require Import HOL_Light.
+Import eqtype choice classical_sets.
+
+Elpi Command Alignment_strategy.
+
+Definition Var {A : Type} := A.
+Definition Arg {A : Type} := A.
+
+Elpi Accumulate lp:{{
+  % Usage : Alignment_strategy Definition ?stratname
+  % (?var1 ?var2 ... : Var)
+  % (?field1name : ?field1type)
+  % (?field2name : ?field2type) ...
+  % (?arg1 ?arg2 ... : Arg) :=
+  % (instance1, instance2, ...).
+  % States that consecutive fields of type ?field1type ?field2type ... etc
+  % can be filled with instance1, instance2 ...
+  % But first checks that they are correctly typed [(?instance1 : ?field1type),
+  % (?instance2 : ?field2type (?field1name := ?instance1)), etc]
+
+  main [const-decl _ (some Body) _] :- checktyping Body [] Return,
+  coq.say Return.
+  
+  % Checks the instances' types. The second argument is a list remembering all
+  % fields (both the variable ?fieldxname and its type fieldxtype)
+  func checktyping term, list (pair term term) -> diagnostic.
+  func checktyping_phase2 list term, list (pair term term) -> diagnostic.
+
+  checktyping (fun Vname Type RBody) Store Diag :-
+    (Type = {{Var}} ; Type = {{Arg}}), !,
+    @pi-decl Vname Type x\ checktyping (RBody x) Store Diag.
+  
+  checktyping (fun Vname Type RBody) Store Diag :- !,
+    @pi-decl Vname Type x\ checktyping (RBody x) ((pr x Type) :: Store) Diag.
+  
+  checktyping Body Store Diag :- !,
+    checktyping_phase2 {list_of_tuple Body} {reverse Store} Diag. 
+  
+  checktyping_phase2 (Term :: _) ((pr _ Type) :: _) (error Msg) :-
+    coq.elaborate-skeleton Term Type _ (error Msg), !.
+
+  checktyping_phase2 (Term :: Terms) ((pr X Type)::Store) Diag :- !,
+    coq.elaborate-skeleton Term Type NewTerm ok,
+    (copy X NewTerm =!=> replace Store NewStore),
+    checktyping_phase2 Terms NewStore Diag.
+  
+  checktyping_phase2 [] [] ok :- !.
+  
+  func replace list (pair term term) -> list (pair term term).
+
+  replace [] [] :- !.
+  replace ((pr X Input) :: Rest1) ((pr X Output) :: Rest2) :- !,
+    copy Input Output, replace Rest1 Rest2.
+  
+  func list_of_tuple term -> list term.
+
+  list_of_tuple (app [global Pair, _, _, TRest, X]) L :-
+    coq.locate "pair" Pair, !, rcons {list_of_tuple TRest} X L.
+  list_of_tuple T [T] :- !.
+
+  func reverse list A -> list A.
+
+  reverse [] [] :- !.
+  reverse (A::L) L' :- !, rcons {reverse L} A L'.
+
+  func rcons list A, A -> list A.
+
+  rcons [] A [A] :- !.
+  rcons (A::L) A0 (A::L') :- !, rcons L A0 L'.
+}}.
+
+Elpi Alignment_strategy Definition default (T x : Var) (arg1 : T) (arg2 : arg1 = x) := (x, Logic.eq_refl).
+Elpi Alignment_strategy Definition default
+  (T0 P : Var)
+  (T : Type') (mk' : T0 -> T) (dest' : T -> T0)
+  (mk_dest' : forall x, mk' (dest' x) = x)
+  (dest_mk' : forall x, P x = (dest' (mk' x) = x))
+  (x : Arg) (H : @Arg (P x)) :=
+  (subtype H, mk H, dest H, mk_dest H, dest_mk H).
+
+
+Parameters (A : Type) (x : A) (P : A -> Prop) (H : P x).
+
+Check subtype H : Type'.
+
+Elpi Query lp:{{
+  coq.elaborate-skeleton {{subtype H}} {{Type'}} _ D.
+  coq.say D.
+}}.
 
 Elpi Db align_structures.db lp:{{
   %structure structuretype object objectname
@@ -16,15 +104,16 @@ Elpi Db align_structures.db lp:{{
   %the align command, accumulatable.
   pred align_command i:bool, o:list argument.
   %parses attribute #[info]
-  func is_info -> bool.
+  pred is_info -> bool.
   %uses coq.info or coq.error depending on first argument
-  type infoerror bool -> variadic any (func).
+  type infoerror bool -> variadic any (prop).
 
   gen_name_I Name :- coq.env.fresh-global-id "Unnamed_alignment_instance" Name.
 
   gen_name_L Name :- coq.env.fresh-global-id "Unnamed_lemma" Name.
 
-  is_info Info? :- coq.parse-attributes {attributes} [att "info" bool] Atts,
+  is_info Info? :- attributes A,
+    coq.parse-attributes A [att "info" bool] Atts,
     Atts ==> get-option "info" Info? ; Info? = ff.
   
   infoerror tt A B C D E :- coq.info A B C D E.
@@ -63,11 +152,11 @@ Elpi Accumulate align_structures.db lp:{{
   func infoM (string -> prop), prop.
   infoM Function (Function Message) :- coq.info Message.
 
-  func index -> string.
+  pred index -> string.
   index "(o) : open, aligns with command input.".
   index "(d) : default, aligns with a default value when there is one.".
 
-  func usagemessage -> string.
+  pred usagemessage -> string.
   usagemessage M :- M is
   "Align Name by default -> declares the default instance of the\n" ^
   "  alignable structure Name.".
@@ -100,7 +189,7 @@ Elpi Accumulate align_structures.db lp:{{
   %instance. the exact structure Name is only present to be printed.
   func no_default bool, id, id.
 
-  %In case no default structure in a context where there should be one.
+  %In case of no default structure in a context where there should be one.
   :name "no_default.fail"
   no_default _ _ _ :- coq.error "Error: failed to find a default instance."
   "Please report this.".
@@ -158,6 +247,21 @@ Elpi Accumulate align_structures.db lp:{{
     EM is "Default instance skeleton failed.\nPlease report this error.",
     std.assert-ok! (coq.elaborate-skeleton (app [Build, _ , EQR]) _ Obj) EM.
 }}.
+
+Elpi Command test.
+Elpi Accumulate lp:{{
+  main [const-decl Name (some Bo) Arity] :-
+    coq.say Name Bo Arity.
+}}.
+
+Section test.
+
+End test.
+Elpi test Definition truc := val.
+
+
+
+Elpi test Definition x := .
 
 From mathcomp Require Import classical.classical_sets.
 
