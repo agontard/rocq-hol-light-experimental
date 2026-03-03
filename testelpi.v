@@ -79,16 +79,6 @@ Elpi Alignment_strategy Definition default
   (x : Arg) (H : @Arg (P x)) :=
   (subtype H, mk H, dest H, mk_dest H, dest_mk H).
 
-
-Parameters (A : Type) (x : A) (P : A -> Prop) (H : P x).
-
-Check subtype H : Type'.
-
-Elpi Query lp:{{
-  coq.elaborate-skeleton {{subtype H}} {{Type'}} _ D.
-  coq.say D.
-}}.
-
 Elpi Db align_structures.db lp:{{
   %structure structuretype object objectname
   %declares a structure for that object.
